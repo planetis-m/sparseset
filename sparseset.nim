@@ -9,21 +9,20 @@ type
     sparse: seq[K]          ## Mapping from sparse handles to dense values.
     dense: seq[Entry[K, V]] ## Mapping from dense values to sparse handles.
 
-template empty: untyped = K(s.sparse.len)
-
+template empty(s): untyped = K(s.sparse.len)
 proc initSparseSet*[K, V](sparseCap, denseCap: Natural): SparseSet[K, V] =
-  result = SparseSet[K, V](dense: newSeq[Entry[K, V]](denseCap))
-  grow(result.sparse, sparseCap, K(sparseCap))
+  result = SparseSet[K, V](dense: newSeq[Entry[K, V]](denseCap), sparse: newSeq[K](sparseCap))
+  result.sparse.fill(empty(result))
 
 proc contains*[K, V](s: SparseSet[K, V], key: K): bool =
   # Returns true if the sparse is registered to a dense index.
-  int(key) < s.sparse.len and s.sparse[key] != empty
+  int(key) < s.sparse.len and s.sparse[key] != empty(s)
 
 proc `[]=`*[K, V](s: var SparseSet[K, V], key: K, value: sink V) =
   ## Inserts a `(key, value)` pair into `s`.
   assert int(key) < s.sparse.len, "key must be under len of SparseSet"
   var denseIndex = s.sparse[key]
-  if denseIndex == empty:
+  if denseIndex == empty(s):
     denseIndex = K(s.len)
     s.dense[denseIndex].key = key
     s.sparse[key] = denseIndex
@@ -47,13 +46,13 @@ proc `[]`*[K, V](s: SparseSet[K, V], key: K): lent V =
 proc delete*[K, V](s: var SparseSet[K, V], key: K) =
   ## Deletes `key` from sparse set `s`. Does nothing if the key does not exist.
   let denseIndex = s.sparse[key]
-  if denseIndex != empty:
+  if denseIndex != empty(s):
     let lastIndex = s.len - 1
     let lastKey = s.dense[lastIndex].key
     s.sparse[lastKey] = denseIndex
-    s.sparse[key] = empty
+    s.sparse[key] = empty(s)
     s.dense[denseIndex] = move(s.dense[lastIndex])
-    s.dense[lastIndex] = (key: empty, value: default(V))
+    s.dense[lastIndex] = (key: empty(s), value: default(V))
     s.len.dec
 
 proc sort*[K, V](s: var SparseSet[K, V], cmp: proc (x, y: V): int, order = SortOrder.Ascending) =
@@ -73,8 +72,8 @@ proc sort*[K, V](s: var SparseSet[K, V], cmp: proc (x, y: V): int, order = SortO
     s.dense[j + 1].value = x
 
 proc clear*[K, V](s: var SparseSet[K, V]) =
-  s.sparse.fill(empty)
-  s.dense.fill((key: empty, value: default(V)))
+  s.sparse.fill(empty(s))
+  s.dense.fill((key: empty(s), value: default(V)))
   s.len = 0
 
 iterator keys*[K, V](s: SparseSet[K, V]): K =
