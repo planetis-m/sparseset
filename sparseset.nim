@@ -10,8 +10,8 @@ type
     dense: seq[Entry[K, V]] ## Mapping from dense values to sparse handles.
 
 template empty(s): untyped = K(s.sparse.len)
-proc initSparseSet*[K, V](sparseCap, denseCap: Natural): SparseSet[K, V] =
-  result = SparseSet[K, V](dense: newSeq[Entry[K, V]](denseCap), sparse: newSeq[K](sparseCap))
+proc initSparseSet*[K, V](cap: Natural): SparseSet[K, V] =
+  result = SparseSet[K, V](dense: newSeq[Entry[K, V]](cap), sparse: newSeq[K](cap))
   result.sparse.fill(empty(result))
 
 proc contains*[K, V](s: SparseSet[K, V], key: K): bool =
