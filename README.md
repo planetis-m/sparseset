@@ -1,7 +1,7 @@
 # Sparsesets for Nim
 
 ```nim
-var s = initSparseSet[uint16, int](128)
+var s = initSparseSet[uint16, int](128, 128) # capacity of sparse and dense
 assert s.len == 0
 let ent1 = 1'u16
 let ent2 = 2'u16
