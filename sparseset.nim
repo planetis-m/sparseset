@@ -9,13 +9,14 @@ type
     sparse: seq[K]          ## Mapping from sparse handles to dense values.
     dense: seq[Entry[K, V]] ## Mapping from dense values to sparse handles.
 
-template empty: untyped = K(s.sparse.len)
+template empty: untyped = K(s.sparse.len) # high(K) instead?
+
 proc initSparseSet*[K, V](cap: Natural): SparseSet[K, V] =
   result = SparseSet[K, V](dense: newSeq[Entry[K, V]](cap), sparse: newSeq[K](cap))
   result.sparse.fill(K(cap))
 
 proc contains*[K, V](s: SparseSet[K, V], key: K): bool =
-  # Returns true if the sparse is registered to a dense index.
+  ## Returns true if the sparse is registered to a dense index.
   int(key) < s.sparse.len and s.sparse[key] != empty
 
 proc `[]=`*[K, V](s: var SparseSet[K, V], key: K, value: sink V) =
@@ -38,6 +39,7 @@ proc `[]`*[K, V](s: var SparseSet[K, V], key: K): var V =
   ## Retrieves the value at `s[key]`. The value can be modified.
   ## If `key` is not in `s`, the `KeyError` exception is raised.
   get(s, key)
+
 proc `[]`*[K, V](s: SparseSet[K, V], key: K): lent V =
   ## Retrieves the value at `s[key]`.
   ## If `key` is not in `s`, the `KeyError` exception is raised.
@@ -52,7 +54,7 @@ proc delete*[K, V](s: var SparseSet[K, V], key: K) =
     s.sparse[lastKey] = denseIndex
     s.sparse[key] = empty
     s.dense[denseIndex] = move(s.dense[lastIndex])
-    s.dense[lastIndex] = (key: empty, value: default(V))
+    #s.dense[lastIndex] = (key: empty, value: default(V)) # not needed?
     s.len.dec
 
 proc sort*[K, V](s: var SparseSet[K, V], cmp: proc (x, y: V): int, order = SortOrder.Ascending) =
@@ -73,7 +75,7 @@ proc sort*[K, V](s: var SparseSet[K, V], cmp: proc (x, y: V): int, order = SortO
 
 proc clear*[K, V](s: var SparseSet[K, V]) =
   s.sparse.fill(empty)
-  s.dense.fill((key: empty, value: default(V)))
+  s.dense.fill((key: empty, value: default(V))) # naive but calls destructors
   s.len = 0
 
 iterator keys*[K, V](s: SparseSet[K, V]): K =
@@ -91,7 +93,7 @@ iterator pairs*[K, V](s: SparseSet[K, V]): Entry[K, V] =
 proc len*[K, V](s: SparseSet[K, V]): int = s.len
 
 when isMainModule:
-  var x = initSparseSet[uint16, int](128, 128)
+  var x = initSparseSet[uint16, int](128)
   assert x.len == 0
   let ent1 = 1'u16
   let ent2 = 2'u16
