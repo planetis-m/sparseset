@@ -1,4 +1,5 @@
 import std / algorithm
+from typetraits import supportsCopyMem
 
 type
   Entry*[K, V] = tuple
@@ -54,7 +55,6 @@ proc delete*[K, V](s: var SparseSet[K, V], key: K) =
     s.sparse[lastKey] = denseIndex
     s.sparse[key] = empty
     s.dense[denseIndex] = move(s.dense[lastIndex])
-    #s.dense[lastIndex] = (key: empty, value: default(V)) # not needed?
     s.len.dec
 
 proc sort*[K, V](s: var SparseSet[K, V], cmp: proc (x, y: V): int, order = SortOrder.Ascending) =
@@ -75,7 +75,8 @@ proc sort*[K, V](s: var SparseSet[K, V], cmp: proc (x, y: V): int, order = SortO
 
 proc clear*[K, V](s: var SparseSet[K, V]) =
   s.sparse.fill(empty)
-  s.dense.fill((key: empty, value: default(V))) # naive but calls destructors
+  when not supportsCopyMem(V):
+    for i in 0..<s.len: s.dense[i].value = default(V)
   s.len = 0
 
 iterator keys*[K, V](s: SparseSet[K, V]): K =
@@ -109,6 +110,7 @@ when isMainModule:
   assert x.len == 1
   x.clear()
   assert x.len == 0
+  assert ent2 notin x
   x[ent1] = 10
   assert x.len == 1
   assert x[ent1] == 10

@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.3.2"
+version       = "0.4.0"
 author        = "Antonis Geralis"
 description   = "Sparsets for Nim"
 license       = "MIT"
