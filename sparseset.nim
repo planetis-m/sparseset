@@ -10,21 +10,23 @@ type
     sparse: seq[K]          ## Mapping from sparse handles to dense values.
     dense: seq[Entry[K, V]] ## Mapping from dense values to sparse handles.
 
-template empty*[K](t: typedesc[K]): untyped = K(s.sparse.len)
+template empty*[K](key: K): K = high(K)
+template empty*[K](t: typedesc[K]): K = high(t)
 
 proc initSparseSet*[K, V](cap: Natural): SparseSet[K, V] =
   result = SparseSet[K, V](dense: newSeq[Entry[K, V]](cap), sparse: newSeq[K](cap))
-  result.sparse.fill(when compiles(empty(K)): empty(K) else: K(cap))
+  var k: K
+  result.sparse.fill(empty(k))
 
 proc contains*[K, V](s: SparseSet[K, V], key: K): bool =
   ## Returns true if the sparse is registered to a dense index.
-  key.int < s.sparse.len and s.sparse[key.int] != empty(K)
+  key.int < s.sparse.len and s.sparse[key.int] != empty(key)
 
 proc `[]=`*[K, V](s: var SparseSet[K, V], key: K, value: sink V) =
   ## Inserts a `(key, value)` pair into `s`.
   assert int(key) < s.sparse.len, "key must be under len of SparseSet"
   var denseIndex = s.sparse[key.int]
-  if denseIndex == empty(K):
+  if denseIndex == empty(key):
     denseIndex = K(s.len)
     s.dense[denseIndex.int].key = key
     s.sparse[key.int] = denseIndex
@@ -49,11 +51,11 @@ proc `[]`*[K, V](s: SparseSet[K, V], key: K): lent V =
 proc del*[K, V](s: var SparseSet[K, V], key: K) =
   ## Deletes `key` from sparse set `s`. Does nothing if the key does not exist.
   let denseIndex = s.sparse[key.int]
-  if denseIndex != empty(K):
+  if denseIndex != empty(key):
     let lastIndex = s.len - 1
     let lastKey = s.dense[lastIndex].key
     s.sparse[lastKey.int] = denseIndex
-    s.sparse[key.int] = empty(K)
+    s.sparse[key.int] = empty(key)
     s.dense[denseIndex.int] = move(s.dense[lastIndex])
     s.len.dec
 
@@ -74,7 +76,8 @@ proc sort*[K, V](s: var SparseSet[K, V], cmp: proc (x, y: V): int, order = SortO
     s.dense[j + 1].value = x
 
 proc clear*[K, V](s: var SparseSet[K, V]) =
-  s.sparse.fill(empty(K))
+  var k: K
+  s.sparse.fill(empty(k))
   when not supportsCopyMem(V):
     for i in 0 ..< s.len: s.dense[i].value = default(V)
   s.len = 0

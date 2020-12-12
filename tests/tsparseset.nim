@@ -3,7 +3,7 @@ import sparseset
 type Entity = distinct uint16
 proc `==`(a, b: Entity): bool {.borrow.}
 proc `$`(x: Entity): string {.borrow.}
-template empty*(t: typedesc[Entity]): Entity = Entity(0) #should break
+template empty*(x: Entity): Entity = Entity(128)
 
 block:
   var x = initSparseSet[Entity, int](128)
